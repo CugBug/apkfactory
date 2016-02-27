@@ -5,8 +5,9 @@ dir %cd%|find ".apk" >appname.txt
 for /f  "tokens=1-4" %%i in (appname.txt) do (
 echo %%i %%j %%k %%l
 call decompile.bat %%l "%1"
-start opendir.bat %%l
+call opendir.bat %%l
 )
+del appname.txt
 echo ........
 echo finished
 echo ........
