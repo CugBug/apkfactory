@@ -2,8 +2,8 @@
 import re
 import sys
 filename = sys.argv[1]
-f = open(filename, "r")						##ÊäÈëÎÄ¼şÃû
-fs = open(filename+'info\\'+filename+'service.txt',"w")		##Êä³öÎÄ¼şÃû
+f = open(filename, "r")						##è¾“å…¥æ–‡ä»¶å
+fs = open(filename+'info\\'+filename+'service.txt',"w")		##è¾“å‡ºæ–‡ä»¶å
 fp = open(filename+'info\\'+filename+'provider.txt',"w")
 fr = open(filename+'info\\'+filename+'receiver.txt',"w")
 fa = open(filename+'info\\'+filename+'activity.txt',"w")
@@ -12,7 +12,7 @@ myservice  = ''
 myprovider = ''
 myreceiver = ''
 myactivity = ''
-flag = 0 #±ê¼ÇÎªfalse
+flag = 0 #æ ‡è®°ä¸ºfalse
 while True:  
 	line = f.readline()
 	if flag:
@@ -44,28 +44,28 @@ while True:
 				my = ''.join(ss)
 			if len(my)!=0:
 				my = ''
-				flag = 1	#serviceµÄflag=1
+				flag = 1	#serviceçš„flag=1
 				continue
 			getstr = re.findall(r'(E: provider)',line)
 			for ss in getstr:
 				my = ''.join(ss)
 			if len(my)!=0:
 				my = ''
-				flag = 2	#providerµÄflag=2
+				flag = 2	#providerçš„flag=2
 				continue
 			getstr = re.findall(r'(E: receiver)',line)
 			for ss in getstr:
 				my = ''.join(ss)
 			if len(my)!=0:
 				my = ''
-				flag = 3	#receiverµÄflag=3
+				flag = 3	#receiverçš„flag=3
 				continue
 			getstr = re.findall(r'(E: activity)',line)
 			for ss in getstr:
 				my = ''.join(ss)
 			if len(my)!=0:
 				my = ''
-				flag = 4	#activityµÄflag=4
+				flag = 4	#activityçš„flag=4
 				continue
 	else:  
 			break

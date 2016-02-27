@@ -3,7 +3,7 @@ import re
 import sys
 filename = sys.argv[1]
 f = open(filename+"\\AndroidManifest.xml", "r")
-opfname = filename.replace(sys.argv[2],'') ##上层目录的目录名
+opfname = filename.replace(sys.argv[2],'') ##涓婂眰鐩綍鐨勭洰褰曞悕
 f1 = open(opfname+sys.argv[2]+'_Service.txt',"w")
 f2 = open(opfname+sys.argv[2]+'.txt',"w")
 mypermission = ''

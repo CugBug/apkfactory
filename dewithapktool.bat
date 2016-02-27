@@ -1,6 +1,6 @@
 @echo off
 ::set input=%1%
-::echo 您输入了参数:%input%
+::echo 鎮ㄨ緭鍏ヤ簡鍙傛暟:%input%
 dir %cd%|find ".apk" >appname.txt
 for /f  "tokens=1-4" %%i in (appname.txt) do (
 echo %%i %%j %%k %%l

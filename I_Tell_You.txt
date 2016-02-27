@@ -1,0 +1,17 @@
+dewithapktool.bat会将当前目录下的所有?.apk反编译得到?文件夹
+再以得到的Manifest.xml得到相应的权限写入到?.txt中
+并且将Manifest.xml中的service写到?_Service.txt中
+
+调用关系：
+dewithapktool.bat->decompile.bat//若传入一个参数是f的话则强制反编译（无论是否曾反编译）
+dewithapktool.bat->opendir.bat->service.py(旧版是permission.py没有写servic功能)	
+
+/********************************/
+dewithaapt.bat不需要反编译即可获得所有的目标文件权限列表，这是非常快的。
+使用了aapt工具。
+
+调用关系：
+dewithaapt.bat->permission.bat->aaptinfo.py
+//注意着与上面已经废弃不用的permission.py不同，这是.bat
+//现在已经实现用python和正则表达式匹配aapt输出的service了
+
