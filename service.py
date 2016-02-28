@@ -69,4 +69,6 @@ f4.close()
 f5.close()
 s1.close()
 f.close()
-##print "FINISHED"
+print "......................"
+print sys.argv[2]+" FINISHED!"
+print "......................"

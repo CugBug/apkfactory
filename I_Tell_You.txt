@@ -1,6 +1,11 @@
 dewithapktool.bat会将当前目录下的所有?.apk反编译得到?文件夹
-再以得到的Manifest.xml得到相应的权限写入到?.txt中
-并且将Manifest.xml中的service写到?_Service.txt中
+
+/***
+*再以得到的Manifest.xml得到相应的权限写入到?.txt中
+*并且将Manifest.xml中的service写到?_Service.txt中
+***/
+
+2.27更新：能够找到activity，service，string等信息放到一个目录下
 
 调用关系：
 dewithapktool.bat->decompile.bat//若传入一个参数是f的话则强制反编译（无论是否曾反编译）
