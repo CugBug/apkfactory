@@ -18,13 +18,13 @@ myactivity = ''
 myprovider = ''
 myreceiver = ''
 try:
-	s_all = s.read( )
+	s_all = s.read()
 	getstr = re.findall(r'<string.*?>(.*?)</string>',s_all,re.S)
 	for xx in getstr:
 		mystrings += ''.join(xx)
 		mystrings += '\n'
 finally:
-	s.close( )
+	s.close()
 while True:  
 	line = f.readline()
 	if line:  
