@@ -1,18 +1,31 @@
 # coding=utf-8
 import re
 ##import sys
+
+def PrintBlocks(blocks):		##å°†å…ƒç»„æ’åºè¾“å‡º.dot
+	sortedlist = sorted(blocks.items(), key=lambda x: x[0][0])
+	i = 0
+	for xx in sortedlist
+		print i
+		print xx
+		i+=1
+	##print '	'+ str(sortedlist)
+	return
+
 ##filename = sys.argv[1]
 rFilename = "mytest.smali"
 wFilename = "myresult.dot"
 fRead  = open(rFilename, "r")
 fWirte = open(wFilename, "w")
-flag = 0		##±ê¼Ç×´Ì¬
-mystring = ''	##×îÖÕÒªĞ´ÈëµÄstring
-myclass  = ''	##ÀàÃû
-mysuper  = ''	##¸¸ÀàÃû
-mysource = ''	##À´Ô´ÎÄ¼ş
-method   = ''	##º¯ÊıÃû
-###¶ÁÎÄ¼şÇ°ÈıĞĞ»ñÈ¡Ïà¹ØĞÅÏ¢
+flag = 0		##æ ‡è®°çŠ¶æ€
+mystring = ''	##æœ€ç»ˆè¦å†™å…¥çš„string
+myclass  = ''	##ç±»å
+mysuper  = ''	##çˆ¶ç±»å
+mysource = ''	##æ¥æºæ–‡ä»¶
+method   = ''	##å‡½æ•°å
+blocks   = {}	##è®°å½•APIæµç¨‹çš„å­—å…¸
+APIstring =''	##å°†å†™è¿›å­—å…¸çš„APIå­—ç¬¦ä¸²
+###è¯»æ–‡ä»¶å‰ä¸‰è¡Œè·å–ç›¸å…³ä¿¡æ¯
 count = 0
 while (count < 3):
 	line = fRead.readline()
@@ -26,36 +39,51 @@ while (count < 3):
 		mystring += getstr[0]+'\n'
 	elif count ==2:
 		getstr = re.findall(r'^.source.*?([^ ]*?)$',line)
-		if len(getstr)!=0:		##ÓĞ¿ÉÄÜÃ»ÓĞ
+		if len(getstr)!=0:		##æœ‰å¯èƒ½æ²¡æœ‰
 			mysource = getstr[0]
 			mystring += getstr[0]+'\n'
 	count += 1
 print mystring
 
+jumplist = ['Main']		##æ ‡è®°ç€å½“å‰APIstringçš„æ‰€åœ¨blocks
+i = 0
 while True:
 	line = fRead.readline()
 	if line:
-		if flag == 0:		##ÔÚmethodÌåÍâ
+		if flag == 0:		##åœ¨methodä½“å¤–
 			getstr = re.findall(r'^.method.*?([^ ]*?)$',line)
 			if len(getstr)!=0:
 				method = getstr[0]
 				flag = 1
+				##print '	'+str(blocks)
+				PrintBlocks(blocks)
+				blocks.clear()
+				i = 0
 				print method
-		if flag == 1:		##ÔÚmethodÌåÄÚ
+		elif flag == 1:		##åœ¨methodä½“å†…
 			getstr = re.findall(r'.end method$',line)
 			if len(getstr) != 0:
 				method = ''
 				flag = 0
+				blocks[i,tuple(jumplist)] = APIstring
+				APIstring = ''
+				jumplist = ['Main']
 				continue
 			getstr = re.findall(r'invoke.*?([^ ]*?)$',line)
 			if len(getstr) != 0:
-				print '	'+getstr[0]
+				##print '	'+getstr[0]
+				APIstring += '\n'+getstr[0]
 				continue
-			getstr = re.findall(r' :(.*?)',line)
-			
-			
+			getstr = re.findall(r' +(.*?),? :(.*?$)',line)
+			if len(getstr) != 0:
+				##print getstr[0][0]	##ç¬¬ä¸€é¡¹if-eqz p1
+				##print getstr[0][1]	##ç¬¬äºŒé¡¹cond_0
+				blocks[i,tuple(jumplist)] = APIstring
+				APIstring = ''
+				i += 1
+				jumplist = getstr[0]
+				continue
 	else:
 		break
-		
 fRead.close()
 fWirte.close()
