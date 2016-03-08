@@ -1,4 +1,4 @@
-# coding=utf-8
+﻿# coding=utf-8
 import re
 ##import sys
 
@@ -28,6 +28,7 @@ def PrintBlocks(blocks,jumplist):		##将list输出到.dot
 		i += 1
 		if myjump[0] == '':
 			exec(myjump[1]+'='+str(i))			##节点所代表的下标，比如变量cond_0代表跳转到blocks[3],注意刚好跳转到下一个点，所以应该先+1
+												#if myjump[1].find('try_end') == -1:
 			jump += 'Node'+str(i-1)+' -> Node'+str(i)+'\n'
 			##fWirte.write(jump)
 	i = 0
@@ -43,6 +44,15 @@ def PrintBlocks(blocks,jumplist):		##将list输出到.dot
 				exec('m = '+myjump[1])
 				jump += 'Node'+str(i)+' -> Node'+str(m)+'\n'
 				##fWirte.write(jump)
+			elif myjump[0].find('switch') != -1:##如果是switch语句
+				exec('m = '+myjump[1])
+				for myswitch in m:									##'''有没有跳转到本条switch下面'''
+					exec('M = '+myswitch)
+					jump += 'Node'+str(i)+' -> Node'+str(M)+'\n'
+			elif myjump[0].find('try_end') != -1:##如果是try块的结束
+				MyCatchList = trycatchdict[myjump[0]]
+				for MyCatch in MyCatchList:
+					jump += 'Node'+str(i)+' -> Node'+str(MyCatch)+'\n'
 		i += 1
 		'''
 		if myjump[0].find('switch') != -1:	##如果是switch语句,考虑NONE标志
@@ -57,13 +67,16 @@ def PrintBlocks(blocks,jumplist):		##将list输出到.dot
 		Beindex = jump.find('Node'+str(Flagreturn)+' ->')
 	jump += 'Node'+str(Flagreturn) + ' -> End\n}'
 	for none in Nonelist:
-		begin = jump.find('Node'+str(none)+' -> ')
-		length = len('Node'+str(none)+' -> ')
-		if begin > -1:
-			end = jump.find('\n',begin)
-			newnode = jump[begin+length:end]
-			jump = jump[:begin]+jump[end+1:]
-			jump = jump.replace('Node'+str(none),newnode)
+		while True:
+			begin = jump.find('Node'+str(none)+' -> ')
+			if begin > -1:
+				length = len('Node'+str(none)+' -> ')
+				end = jump.find('\n',begin)
+				newnode = jump[begin+length:end]
+				print jump[begin:end+1]
+				jump = jump[:begin]+jump[end+1:]
+				jump = jump.replace('-> Node'+str(none),'-> '+newnode)
+			else: break
 	fWirte.write(jump)
 	
 	return
@@ -104,6 +117,9 @@ print mystring
 
 jumplist = []		##标记着当前APIstring的所在blocks,是一个元组列表[('',''),('',''),('','')]
 switchlist = []		##记录所有的switch名称
+##numtrycatch = 0	##记录trycatch块的数量
+##trylist = []		##try的列表
+trycatchdict = {}	##trycatch字典,形式：'try_start_1':['catch_1','catch_2']
 while True:
 	line = fRead.readline()
 	if line:
@@ -113,6 +129,8 @@ while True:
 				method = getstr[0]
 				flag = 1
 				jumplist = []
+				switchlist = []
+				trycatchdict = {}
 				##PrintBlocks(blocks)
 				blocks = []
 				print '*************************'
@@ -129,8 +147,7 @@ while True:
 				PrintBlocks(blocks,jumplist)
 				APIstring = ''
 				continue
-				
-				
+			##若存在switch结构
 			if flag > 1:
 				i = len(switchlist)-1
 				while line.find(switchlist[i]) == -1:
@@ -146,14 +163,13 @@ while True:
 						if len(getstr) != 0:
 							exec(switchlist[i]+'.append(getstr[0])')	##往switchlist[i]的列表里面加入跳转标记例如:pswitch_0
 							continue
-						getstr = re.findall(r'.end packed-switch$',line)
+						getstr = re.findall(r'.end.*?switch$',line)
 						if len(getstr) != 0:
 							print switchlist[i]+"'s branch is:"
 							exec ('print str('+switchlist[i]+')')
 							break
 					continue
-					
-					
+			
 			getstr = re.findall(r'invoke.*?([^ ]*?)$',line)	##API调用
 			if len(getstr) != 0:
 				##print '	'+getstr[0]
@@ -164,9 +180,26 @@ while True:
 				if getstr[0][0].find('switch') > -1:		##若是switch跳转
 					flag += 1								##标记flag+1，找getstr[0][1]的.packed-switch
 					switchlist.append(getstr[0][1])
+				if getstr[0][1].find('try') > -1:			##若找到了try块
+					strtry = re.findall(r'try_(.+?)_(.+?)$',getstr[0][1])
+					#if strtry[0][0] == 'start':				##若找到的是start块
+						##trylist.append('try_end_'+strtry[0][1])
+					if strtry[0][0] == 'end':					##若找到的是end块
+						line = fRead.readline()
+						catchstr = re.findall(r'.catch.*?} :(.*?)$',line)
+						catchlist = []						##catch的列表
+						while len(catchstr) != 0:
+							catchlist.append(catchstr[0][0])
+							line = fRead.readline()
+							catchstr = re.findall(r'.catch.*?} :(.*?)$',line)
+						exec('mytry="try_start_'+strtry[0][1]+'"')
+						trycatchdict[mytry] = tuple(catchlist)
+						#trycatchdict[strtry] = tuple(catchlist)
+					##numcatch += 1
+					
 				##print getstr[0][0]	##第一项if-eqz p1
 				##print getstr[0][1]	##第二项cond_0
-				elif APIstring == '':
+				if APIstring == '':
 					blocks.append('#NONE#')
 				else:
 					blocks.append(APIstring)
