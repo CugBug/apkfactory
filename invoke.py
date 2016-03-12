@@ -1,17 +1,21 @@
 ﻿# coding=utf-8
 import re
-##import sys
-
-def PrintBlocks(blocks,jumplist):		##将list输出到.dot
+import os
+import sys
+def PrintBlocks(blocks,jumplist,method):		##将list输出到.dot
+	'''
 	for xx in blocks:
 		print xx
 	print jumplist
-	global Flagreturn
 	print 'return at blocks['+str(Flagreturn)+']'
+	'''
+	global Flagreturn
+	global mydir
 	jump = ''
 	node = ''
 	Nonelist = []
-	global fWirte
+	wFilename = mydir+'\\'+method+'.dot'
+	fWirte = open(wFilename, "w")
 	fWirte.write('digraph {\n')
 	i = 0
 	for myNode in blocks:			##写Node信息
@@ -60,32 +64,98 @@ def PrintBlocks(blocks,jumplist):		##将list输出到.dot
 		'''
 	###消除return块到其他块的走向，并连上End块，写入到文件中###
 	###将NONE消除掉，主要是字符串替换###
-	Beindex = jump.find('Node'+str(Flagreturn)+' ->')
-	while Beindex > -1:
-		Endindex = jump.find('\n',Beindex)
-		jump = jump[:Beindex]+jump[Endindex+1:]
+	if Flagreturn > -1:
 		Beindex = jump.find('Node'+str(Flagreturn)+' ->')
-	jump += 'Node'+str(Flagreturn) + ' -> End\n}'
+		while Beindex > -1:
+			Endindex = jump.find('\n',Beindex)
+			jump = jump[:Beindex]+jump[Endindex+1:]
+			Beindex = jump.find('Node'+str(Flagreturn)+' ->')
+		jump += 'Node'+str(Flagreturn) + ' -> End\n}'
+		##print "########"+jump+"########\n"
 	for none in Nonelist:
+		'''
+		##找到所有新node的开始和结束下标
+		begin = [0]
+		end   = [0]
+		index = jump.find('Node'+str(none)+' -> ',end[-1])
+		while index > -1:
+			begin.append(index)
+			end.append(jump.find('\n',begin[-1]))
+			index = jump.find('Node'+str(none)+' -> ',end[-1])
+		length = len('Node'+str(none)+' -> ')
+		listindex = len(begin)-1
+		##将新node放到list中,把旧的node ->行删除
+		newnode = []
+		while listindex > 0:
+			mybegin = begin[listindex]
+			myend = end[listindex]
+			newnode.append(jump[mybegin+length:myend])
+			listindex -= 1
+			jump = jump[:mybegin]+jump[myend+1:]
+		##把旧 -> node行删除并以新node代替之
+		toreplace = jump.rfind('-> Node'+str(none)+'\n')
+		while toreplace > -1:
+			tobegin = jump.rfind('\n',0,toreplace)
+			toend = jump.find('\n',toreplace)
+			mystr = jump[tobegin:toend]
+			myreplace = ''
+			for mynewnode in newnode:
+				myreplace += mystr.replace('-> Node'+str(none)+'\n','-> '+mynewnode+'\n')
+			myreplace = myreplace.replace(mynewnode+' -> '+mynewnode+'\n','')
+			print "#myreplace#"+myreplace+"\n######"
+			jump = jump[:tobegin]+myreplace+jump[toend:]
+			toreplace = jump.rfind('-> Node'+str(none)+'\n',tobegin)
+		'''
+		
+		
 		while True:
 			begin = jump.find('Node'+str(none)+' -> ')
 			if begin > -1:
 				length = len('Node'+str(none)+' -> ')
 				end = jump.find('\n',begin)
 				newnode = jump[begin+length:end]
-				print jump[begin:end+1]
+				#print str(none)+'#turnto'+newnode
 				jump = jump[:begin]+jump[end+1:]
-				jump = jump.replace('-> Node'+str(none),'-> '+newnode)
+				jump = jump.replace('-> Node'+str(none)+'\n','-> '+newnode+'\n')
 			else: break
+		'''
+		start = []
+		end = []
+		forstart = jump.find(' -> Node'+str(none)+'\n')
+		while forstart > -1:
+			start.append( jump.rfind('\n',0,forstart) )
+			end.append( jump.find('\n',forstart) )
+			forstart = jump.find(' -> Node'+str(none)+'\n',end[-1])
+		mynewnode = re.findall('Node'+str(none)+' -> (.*?)\n',jump)
+		for newnode in mynewnode:
+			Begin = jump.find('Node'+str(none)+' -> '+newnode+'\n')
+			End = jump.find('\n',Begin)
+			jump = jump[:Begin]+jump[End+1:]
+			mylen = len(end)-1
+			while mylen > -1:
+				mystart = start[mylen]
+				myend = end[mylen]
+				if mystart < 0:
+					mystart = 0
+				mystr = jump[mystart:myend]
+				mystr = mystr.replace('Node'+str(none),newnode)
+				mylen -=1
+				##print "mystr###"+mystr+"###"
+				jump += mystr
+		while len(end) > 0:
+			myend = end.pop()
+			mystart = start.pop()
+			jump = jump[:mystart+1]+jump[myend:]
+		jump += '\n}'
+		'''
 	fWirte.write(jump)
-	
+	fWirte.close()
 	return
 
-##filename = sys.argv[1]
-rFilename = "mytest.smali"
-wFilename = "myresult.dot"
+filename = sys.argv[1]
+rFilename = filename
 fRead  = open(rFilename, "r")
-fWirte = open(wFilename, "w")
+
 flag = 0		##标记状态
 mystring = ''	##最终要写入的string
 myclass  = ''	##类名
@@ -113,7 +183,15 @@ while (count < 3):
 			mysource = getstr[0]
 			mystring += getstr[0]+'\n'
 	count += 1
-print mystring
+#print mystring
+##print myclass
+mydir  = myclass.replace('/','\\')
+##myfile = mydir[1:-1]+'.dot'
+##IndexOfFile = mydir.rfind('\\')
+mydir  = mydir[1:-1]
+if not os.path.exists(mydir):
+	os.makedirs(mydir)
+
 
 jumplist = []		##标记着当前APIstring的所在blocks,是一个元组列表[('',''),('',''),('','')]
 switchlist = []		##记录所有的switch名称
@@ -124,7 +202,7 @@ while True:
 	line = fRead.readline()
 	if line:
 		if flag == 0:		##在method体外
-			getstr = re.findall(r'^.method.*?([^ ]*?)$',line)
+			getstr = re.findall(r'^.method.*?[<]?([^ ]*?)[>]?[(]',line)
 			if len(getstr)!=0:
 				method = getstr[0]
 				flag = 1
@@ -133,19 +211,20 @@ while True:
 				trycatchdict = {}
 				##PrintBlocks(blocks)
 				blocks = []
-				print '*************************'
-				print method
+				Flagreturn = -1
+				#print '*************************'
+				#print method
 		elif flag > 0:		##在method体内
 			getstr = re.findall(r'.end method$',line)		##函数结束标记
 			if len(getstr) != 0:
-				method = ''
-				flag = 0
 				if APIstring == '':
 					blocks.append('#NONE#')
 				else:
 					blocks.append(APIstring)
-				PrintBlocks(blocks,jumplist)
+				PrintBlocks(blocks,jumplist,method)
 				APIstring = ''
+				method = ''
+				flag = 0
 				continue
 			##若存在switch结构
 			if flag > 1:
@@ -165,8 +244,8 @@ while True:
 							continue
 						getstr = re.findall(r'.end.*?switch$',line)
 						if len(getstr) != 0:
-							print switchlist[i]+"'s branch is:"
-							exec ('print str('+switchlist[i]+')')
+							#print switchlist[i]+"'s branch is:"
+							#exec ('print str('+switchlist[i]+')')
 							break
 					continue
 			
@@ -214,7 +293,7 @@ while True:
 	else:
 		break
 fRead.close()
-fWirte.close()
+
 
 '''
 每个jumplist包含所有跳转指令
